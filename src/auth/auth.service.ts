@@ -19,6 +19,7 @@ import { nanoid } from 'nanoid';
 import { ResetToken } from './schemas/reset-token.schema';
 import { MailService } from 'src/services/mail.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +31,7 @@ export class AuthService {
     private resetTokenModel: Model<ResetToken>,
     private jwtService: JwtService,
     private mailService: MailService,
+    private roleService: RolesService,
   ) {}
 
   async signup(SignUpData: SignUpDto) {
@@ -144,5 +146,14 @@ export class AuthService {
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
     return { message: 'Password reset successful' };
+  }
+
+  async getUserPermissions(userId: string) {
+    const user = await this.UserModel.findById(userId);
+    if (!user) {
+      throw new BadRequestException();
+    }
+    const role = await this.roleService.getRoleById(user.roleId.toString());
+    return role.permissions;
   }
 }
